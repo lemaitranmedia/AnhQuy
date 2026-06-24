@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BOD Financial Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg:#ffffff; --bg2:#f6f6f4; --bg3:#eeecea;
+  --txt:#1a1a18; --txt2:#6b6b67; --txt3:#9b9b96;
+  --border:rgba(0,0,0,.09); --border2:rgba(0,0,0,.16);
+  --blue:#185FA5; --blue-bg:#E6F1FB; --blue-txt:#0C447C;
+  --green:#1D9E75; --green-bg:#E1F5EE; --green-txt:#0F6E56;
+  --red:#E24B4A; --red-bg:#FCEBEB; --red-txt:#A32D2D;
+  --amber:#EF9F27; --amber-bg:#FAEEDA; --amber-txt:#854F0B;
+  --gray:#B4B2A9; --r:8px; --rlg:12px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1a;--bg2:#252523;--bg3:#2e2e2b;
+    --txt:#f0efe8;--txt2:#a0a09a;--txt3:#6a6a64;
+    --border:rgba(255,255,255,.09);--border2:rgba(255,255,255,.16);
+    --blue-bg:#042C53;--blue-txt:#B5D4F4;
+    --green-bg:#04342C;--green-txt:#9FE1CB;
+    --red-bg:#501313;--red-txt:#F7C1C1;
+    --amber-bg:#412402;--amber-txt:#FAC775;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--txt);min-height:100vh}
+
+/* TOPBAR */
+.topbar{background:var(--bg);border-bottom:0.5px solid var(--border);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:12px;flex-wrap:wrap}
+.topbar-l{display:flex;align-items:center;gap:12px}
+.logo{background:var(--blue);color:#fff;font-size:11px;font-weight:700;padding:4px 8px;border-radius:5px;letter-spacing:.4px}
+.topbar-title{font-size:14px;font-weight:500;color:var(--txt)}
+.topbar-sub{font-size:11px;color:var(--txt2);margin-top:1px}
+.topbar-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* LAYOUT */
+.layout{display:flex;min-height:calc(100vh - 52px)}
+.sidebar{width:196px;background:var(--bg);border-right:0.5px solid var(--border);padding:16px 0;flex-shrink:0;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto}
+.nav-lbl{font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;padding:12px 16px 5px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;font-size:13px;color:var(--txt2);cursor:pointer;transition:.1s;border:none;background:none;width:100%;text-align:left;border-right:2px solid transparent}
+.nav-item:hover{background:var(--bg2);color:var(--txt)}
+.nav-item.active{color:var(--blue);background:var(--blue-bg);border-right-color:var(--blue);font-weight:500}
+.nav-kpi{padding:8px 16px}
+.kpi-mini{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:11.5px}
+.kpi-mini:last-child{border-bottom:none}
+.kpi-mini-lbl{color:var(--txt2)}
+.kpi-mini-val{font-weight:500;color:var(--txt)}
+
+.main{flex:1;padding:24px;overflow-x:hidden;min-width:0}
+.panel{display:none}.panel.active{display:block}
+
+/* CARDS */
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rlg);padding:16px 18px;margin-bottom:14px}
+.card-title{font-size:11px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
+.section-hd{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.section-hd h2{font-size:15px;font-weight:500;color:var(--txt)}
+.section-hd p{font-size:12px;color:var(--txt2);margin-top:2px}
+
+/* METRIC CARDS */
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin-bottom:14px}
+.metric{background:var(--bg2);border-radius:var(--r);padding:13px 15px}
+.metric-lbl{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.metric-val{font-size:24px;font-weight:500;line-height:1;color:var(--txt)}
+.metric-unit{font-size:13px;font-weight:400;color:var(--txt2);margin-left:2px}
+.metric-sub{font-size:11px;margin-top:6px}
+.up{color:var(--green)}.dn{color:var(--red)}.nu{color:var(--txt3)}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px;line-height:1.4}
+.b-up{background:var(--green-bg);color:var(--green-txt)}
+.b-dn{background:var(--red-bg);color:var(--red-txt)}
+.b-nu{background:var(--bg2);color:var(--txt3)}
+.b-info{background:var(--blue-bg);color:var(--blue-txt)}
+
+/* GRID */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:900px){.two-col{grid-template-columns:1fr}.three-col{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.three-col{grid-template-columns:1fr}.sidebar{display:none}.main{padding:14px}}
+
+/* LEGEND */
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:8px}
+.legend span{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2)}
+.ld{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+/* CHARTS */
+.ch{position:relative;width:100%}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;padding:6px 10px;text-align:right;border-bottom:0.5px solid var(--border2)}
+.tbl th:first-child{text-align:left}
+.tbl td{padding:7px 10px;border-bottom:0.5px solid var(--border);text-align:right;color:var(--txt2)}
+.tbl td:first-child{text-align:left;color:var(--txt)}
+.tbl tr.bold td{font-weight:600;color:var(--txt);background:var(--bg2)}
+.tbl tr.total td{font-weight:600;color:var(--txt);border-top:0.5px solid var(--border2)}
+.tbl tr.sub td:first-child{padding-left:20px;font-size:11.5px}
+.tbl tr:last-child td{border-bottom:none}
+
+/* PROGRESS */
+.prog{margin-bottom:9px}
+.prog-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--txt2);margin-bottom:4px}
+.prog-track{height:5px;background:var(--bg3);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;border-radius:99px;transition:width .4s}
+
+/* DIVIDER */
+hr{border:none;border-top:0.5px solid var(--border);margin:14px 0}
+
+/* FILTER */
+.filter-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.filter-row label{font-size:12px;color:var(--txt2)}
+select{font-size:12px;padding:5px 9px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--txt);cursor:pointer;outline:none}
+
+/* LOADING */
+#loading{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:14px}
+.spinner{width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading p{font-size:13px;color:var(--txt2)}
+
+/* AI ANALYSIS TAB */
+.ai-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:var(--blue);color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:500;cursor:pointer;transition:.15s;letter-spacing:.2px}
+.ai-btn:hover{background:var(--blue-txt)}
+.ai-btn:disabled{opacity:.6;cursor:not-allowed}
+.ai-btn .spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.ai-btn.loading .spin{display:block}
+.ai-btn.loading .btn-icon{display:none}
+.ai-result{margin-top:18px}
+.ai-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.ai-timestamp{font-size:11px;color:var(--txt3)}
+.ai-section{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rlg);padding:18px 20px;margin-bottom:12px}
+.ai-section-title{font-size:11px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.ai-section-body{font-size:13px;color:var(--txt2);line-height:1.75}
+.ai-section-body strong{color:var(--txt);font-weight:500}
+.ai-section.highlight-green{border-left:3px solid var(--green)}
+.ai-section.highlight-red{border-left:3px solid var(--red)}
+.ai-section.highlight-amber{border-left:3px solid var(--amber)}
+.ai-section.highlight-blue{border-left:3px solid var(--blue)}
+.ai-kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:12px}
+.ai-kv:last-child{border-bottom:none}
+.ai-kv-lbl{color:var(--txt2)}.ai-kv-val{font-weight:500;color:var(--txt)}
+.ai-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;color:var(--txt3)}
+.ai-placeholder .ai-big-icon{font-size:40px;margin-bottom:14px;opacity:.5}
+.ai-placeholder p{font-size:13px;line-height:1.6;max-width:360px}
+.ai-error{background:var(--red-bg);border:0.5px solid var(--red);border-radius:var(--r);padding:12px 16px;font-size:12.5px;color:var(--red-txt);margin-top:14px}
+.rating-bar{display:flex;align-items:center;gap:10px;margin:8px 0}
+.rating-bar-lbl{font-size:12px;color:var(--txt2);width:120px;flex-shrink:0}
+.rating-bar-track{flex:1;height:6px;background:var(--bg3);border-radius:99px;overflow:hidden}
+.rating-bar-fill{height:100%;border-radius:99px}
+.rating-bar-val{font-size:12px;font-weight:500;color:var(--txt);width:36px;text-align:right;flex-shrink:0}
+.tag{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;margin:2px}
+.tag-up{background:var(--green-bg);color:var(--green-txt)}
+.tag-dn{background:var(--red-bg);color:var(--red-txt)}
+.tag-nu{background:var(--bg2);color:var(--txt3)}
+.tag-warn{background:var(--amber-bg);color:var(--amber-txt)}
+.stream-cursor{display:inline-block;width:2px;height:13px;background:var(--blue);margin-left:2px;animation:blink .8s step-end infinite;vertical-align:middle}
+@keyframes blink{50%{opacity:0}}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <p id="loading-msg">Đang tải dữ liệu...</p>
+</div>
+
+<div id="app" style="display:none">
+<div class="topbar">
+  <div class="topbar-l">
+    <div class="logo">BOD</div>
+    <div>
+      <div class="topbar-title" id="hd-company">—</div>
+      <div class="topbar-sub" id="hd-sub">Đơn vị: tỷ đồng · Cập nhật: <span id="hd-updated">—</span></div>
+    </div>
+  </div>
+  <div class="topbar-r">
+    <span id="hd-period" class="badge b-info"></span>
+    <select id="yr-select" onchange="changeYear()" style="font-size:12px">
+      <option value="2025">2025</option>
+      <option value="2026" selected>2026</option>
+    </select>
+  </div>
+</div>
+
+<div class="layout">
+<aside class="sidebar">
+  <div class="nav-lbl">Báo cáo</div>
+  <button class="nav-item active" onclick="sw('overview',this)">📊 Tổng quan</button>
+  <button class="nav-item" onclick="sw('revenue',this)">📈 Doanh thu</button>
+  <button class="nav-item" onclick="sw('pnl',this)">📋 P&L 2025</button>
+  <button class="nav-item" onclick="sw('balance',this)">⚖️ Bảng CĐKT</button>
+  <button class="nav-item" onclick="sw('cashflow',this)">🔄 Lưu chuyển tiền</button>
+  <button class="nav-item" onclick="sw('kpi',this)">📌 KPI vận hành</button>
+  <button class="nav-item" onclick="sw('ai',this)">✨ Phân tích AI</button>
+  <div class="nav-lbl" style="margin-top:8px">Nhanh</div>
+  <div class="nav-kpi" id="sidebar-kpi"></div>
+</aside>
+
+<main class="main">
+
+<!-- OVERVIEW -->
+<div id="tab-overview" class="panel active">
+  <div class="section-hd">
+    <div><h2>Tổng quan</h2><p id="ov-sub">BCTC 2025 + Doanh thu 2026 YTD</p></div>
+  </div>
+  <div class="metric-grid" id="ov-metrics"></div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Doanh thu theo tháng (tỷ đồng)</div>
+      <div class="legend">
+        <span><span class="ld" style="background:var(--gray)"></span>2025 cùng kỳ</span>
+        <span><span class="ld" style="background:var(--blue)"></span>2026</span>
+      </div>
+      <div class="ch" style="height:210px"><canvas id="c-ov-monthly"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Cơ cấu doanh thu 2026 YTD theo mảng</div>
+      <div class="legend" id="pie-legend"></div>
+      <div class="ch" style="height:210px"><canvas id="c-ov-pie"></canvas></div>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">MoM % tăng trưởng doanh thu</div>
+      <div class="ch" style="height:170px"><canvas id="c-ov-mom"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Tiến độ vs Kế hoạch năm</div>
+      <div id="ov-progress" style="padding-top:4px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- REVENUE DETAIL -->
+<div id="tab-revenue" class="panel">
+  <div class="section-hd">
+    <div><h2>Doanh thu chi tiết</h2><p>Phân theo mảng và dự án</p></div>
+  </div>
+  <div class="metric-grid" id="rev-metrics"></div>
+  <div class="card">
+    <div class="card-title">Doanh thu theo mảng — từng tháng (tỷ đồng)</div>
+    <div class="filter-row">
+      <label>Mảng:</label>
+      <select id="rev-seg-filter" onchange="renderRevDetail()">
+        <option value="all">Tất cả</option>
+        <option value="primary">Sơ cấp</option>
+        <option value="branded">Branded</option>
+        <option value="secondary">Thứ cấp</option>
+        <option value="service">Dịch vụ</option>
+      </select>
+    </div>
+    <div class="legend">
+      <span><span class="ld" style="background:var(--blue)"></span>Sơ cấp</span>
+      <span><span class="ld" style="background:var(--green)"></span>Branded</span>
+      <span><span class="ld" style="background:var(--amber)"></span>Thứ cấp</span>
+      <span><span class="ld" style="background:var(--gray)"></span>Dịch vụ</span>
+    </div>
+    <div class="ch" style="height:240px"><canvas id="c-rev-seg"></canvas></div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Thực hiện vs Kế hoạch (tỷ đồng)</div>
+      <div class="ch" style="height:200px"><canvas id="c-rev-vs-kh"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Top dự án — tháng gần nhất</div>
+      <div class="ch" style="height:200px"><canvas id="c-rev-proj"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- PNL -->
+<div id="tab-pnl" class="panel">
+  <div class="section-hd"><div><h2>Kết quả kinh doanh (P&L)</h2><p>Năm tài chính 2025</p></div></div>
+  <div class="card" style="overflow-x:auto">
+    <table class="tbl">
+      <thead><tr>
+        <th style="text-align:left;min-width:200px">Chỉ tiêu</th>
+        <th>Thực hiện</th>
+        <th>Kế hoạch</th>
+        <th>vs KH</th>
+      </tr></thead>
+      <tbody id="pnl-body"></tbody>
+    </table>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Waterfall: Cầu nối lợi nhuận gộp → LNST</div>
+      <div class="ch" style="height:220px"><canvas id="c-pnl-bridge"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Các tỉ suất biên (%)</div>
+      <div class="ch" style="height:220px"><canvas id="c-pnl-margin"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- BALANCE SHEET -->
+<div id="tab-balance" class="panel">
+  <div class="section-hd"><div><h2>Bảng cân đối kế toán</h2><p>Tại ngày 31/12/2025</p></div></div>
+  <div class="three-col" id="bs-container"></div>
+</div>
+
+<!-- CASH FLOW -->
+<div id="tab-cashflow" class="panel">
+  <div class="section-hd"><div><h2>Lưu chuyển tiền tệ</h2><p>Năm 2025</p></div></div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Tổng hợp 3 dòng tiền (tỷ đồng)</div>
+      <div class="ch" style="height:200px"><canvas id="c-cf-bar"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Chi tiết lưu chuyển tiền tệ</div>
+      <div id="cf-detail" style="overflow-x:auto"></div>
+    </div>
+  </div>
+</div>
+
+<!-- KPI -->
+<div id="tab-kpi" class="panel">
+  <div class="section-hd"><div><h2>KPI vận hành</h2><p>Theo dõi hiệu suất kinh doanh hàng tháng</p></div></div>
+  <div class="metric-grid" id="kpi-metrics"></div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Số deal chốt & tỉ lệ chốt (%)</div>
+      <div class="ch" style="height:210px"><canvas id="c-kpi-deals"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Khách hàng mới & đang theo dõi</div>
+      <div class="ch" style="height:210px"><canvas id="c-kpi-cust"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- AI ANALYSIS -->
+<div id="tab-ai" class="panel">
+  <div class="section-hd">
+    <div>
+      <h2>Phân tích AI</h2>
+      <p>Claude đọc toàn bộ data và đưa ra đánh giá trung lập, khuyến nghị cho BOD</p>
+    </div>
+    <button class="ai-btn" id="ai-run-btn" onclick="runAI()">
+      <div class="spin"></div>
+      <span class="btn-icon">✨</span>
+      Phân tích ngay
+    </button>
+  </div>
+
+  <div id="ai-placeholder" class="ai-placeholder">
+    <div class="ai-big-icon">✨</div>
+    <p>Bấm <strong>Phân tích ngay</strong> để Claude đọc toàn bộ số liệu doanh thu, P&L, KPI và đưa ra đánh giá toàn diện.</p>
+  </div>
+
+  <div id="ai-result" class="ai-result" style="display:none">
+    <div class="ai-header">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:13px;font-weight:500;color:var(--txt)">Báo cáo phân tích AI</span>
+        <span class="tag tag-nu" id="ai-model-tag">claude-sonnet-4-6</span>
+      </div>
+      <span class="ai-timestamp" id="ai-ts"></span>
+    </div>
+    <div id="ai-output"></div>
+  </div>
+  <div id="ai-error" class="ai-error" style="display:none"></div>
+</div>
+
+</main>
+</div>
+</div>
+
+<script>
+// ── SUPABASE CONFIG ──────────────────────────────────────────
+// Thay 2 giá trị này bằng Supabase project của bạn
+const SB_URL = localStorage.getItem('bod_sb_url') || 'https://fjzrcvuivtpevxzadwfy.supabase.co';
+const SB_KEY = localStorage.getItem('bod_sb_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZqenJjdnVpdnRwZXZ4emFkd2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NDg0NDEsImV4cCI6MjA5NTUyNDQ0MX0.lMOCRTaj3xeaTagohksZgZrXa-0PCwUmRZYdGQ7Luq4';
+
+const MONTHS = ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
+const SEGS = { primary:'Sơ cấp', branded:'Branded', secondary:'Thứ cấp', service:'Dịch vụ' };
+const SEG_CLR = { primary:'#185FA5', branded:'#1D9E75', secondary:'#EF9F27', service:'#B4B2A9' };
+const isDark = matchMedia('(prefers-color-scheme:dark)').matches;
+const txt = isDark ? 'rgba(255,255,255,.5)' : 'rgba(0,0,0,.4)';
+const grid = isDark ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.06)';
+const C = { blue:'#185FA5', green:'#1D9E75', amber:'#EF9F27', red:'#E24B4A', gray:'#B4B2A9' };
+
+let DB = { config:{}, pnl:[], bs:[], cf:[], revenue:[], projects:[], kpi:[] };
+let charts = {};
+
+// ── FETCH ────────────────────────────────────────────────────
+async function sbGet(table, params='') {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}${params}`, {
+    headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }
+  });
+  return r.json();
+}
+
+async function loadAll() {
+  setLoading('Đang tải cấu hình...');
+  const [cfg, pnl, bs, cf, rev, proj, kpi] = await Promise.all([
+    sbGet('bod_config','?id=eq.main&limit=1'),
+    sbGet('bod_pnl','?order=year.asc,row_order.asc'),
+    sbGet('bod_balance_sheet','?order=year.asc,section.asc,row_order.asc'),
+    sbGet('bod_cashflow','?order=year.asc,section.asc,row_order.asc'),
+    sbGet('bod_monthly_revenue','?order=year.asc,month.asc'),
+    sbGet('bod_project_revenue','?order=year.asc,month.asc'),
+    sbGet('bod_monthly_kpi','?order=year.asc,month.asc'),
+  ]);
+  DB.config = cfg[0] || {};
+  DB.pnl = pnl; DB.bs = bs; DB.cf = cf;
+  DB.revenue = rev; DB.projects = proj; DB.kpi = kpi;
+
+  document.getElementById('hd-company').textContent = DB.config.company || 'Financial Dashboard';
+  document.getElementById('hd-sub').innerHTML = `Đơn vị: ${DB.config.currency||'tỷ đồng'} · Cập nhật: <span id="hd-updated">${new Date().toLocaleDateString('vi-VN')}</span>`;
+  setLoading('Đang vẽ biểu đồ...');
+  renderAll();
+  hideLoading();
+}
+
+function setLoading(msg) { document.getElementById('loading-msg').textContent = msg; }
+function hideLoading() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+}
+
+// ── HELPERS ──────────────────────────────────────────────────
+function revByMonth(yr, seg=null) {
+  return MONTHS.map((_,i) => {
+    const mn = i+1;
+    const rows = DB.revenue.filter(r => r.year===+yr && r.month===mn && (seg ? r.segment===seg : r.segment!=='total'));
+    return seg ? (rows[0]?.revenue||0) : rows.reduce((s,r)=>s+(r.revenue||0),0);
+  });
+}
+function revBudgetByMonth(yr) {
+  return MONTHS.map((_,i) => {
+    const mn=i+1;
+    return DB.revenue.filter(r=>r.year===+yr&&r.month===mn&&r.segment!=='total').reduce((s,r)=>s+(r.budget||0),0);
+  });
+}
+function revYTD(yr) { return revByMonth(yr).reduce((s,v)=>s+v,0); }
+function momPct(arr) {
+  return arr.map((v,i) => i===0 ? null : arr[i-1] ? ((v-arr[i-1])/arr[i-1]*100) : null);
+}
+function mkChart(id, cfg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(el, cfg);
+}
+function baseOpts(extra={}) {
+  return { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false }, ...extra.plugins }, scales:{ x:{ ticks:{color:txt,font:{size:11}}, grid:{color:grid} }, y:{ ticks:{color:txt,font:{size:11}}, grid:{color:grid} }, ...extra.scales }, ...extra };
+}
+function pct(v,b) { return b ? ((v-b)/Math.abs(b)*100) : null; }
+function fmtPct(v) { return v===null ? '—' : (v>=0?'+':'')+v.toFixed(1)+'%'; }
+function badge(v) { return `<span class="badge ${v>=0?'b-up':'b-dn'}">${fmtPct(v)}</span>`; }
+
+// ── RENDER ALL ───────────────────────────────────────────────
+function renderAll() {
+  renderOverview();
+  renderRevDetail();
+  renderPnl();
+  renderBS();
+  renderCF();
+  renderKpi();
+  renderSidebarKpi();
+}
+
+// ── OVERVIEW ─────────────────────────────────────────────────
+function renderOverview() {
+  const yr = +document.getElementById('yr-select').value;
+  const rev26 = revByMonth(yr);
+  const rev25 = revByMonth(yr-1);
+  const ytd26 = rev26.reduce((s,v)=>s+v,0);
+  const ytd25 = rev25.reduce((s,v)=>s+v,0);
+  const lastMon = rev26.filter(v=>v>0);
+  const lastVal = lastMon[lastMon.length-1]||0;
+  const prevVal = lastMon[lastMon.length-2]||0;
+  const momLast = prevVal ? (lastVal-prevVal)/prevVal*100 : null;
+
+  // P&L KPIs (static 2025)
+  const pnl25 = DB.pnl.filter(r=>r.year===2025);
+  const getPnlVal = lbl => (pnl25.find(r=>r.label===lbl)||{}).value||0;
+  const dtt = getPnlVal('Doanh thu thuần')||1284;
+  const lnst = getPnlVal('Lợi nhuận sau thuế (LNST)')||142;
+  const ebitda = getPnlVal('EBITDA')||218;
+
+  // Metrics
+  document.getElementById('ov-metrics').innerHTML = [
+    { lbl:`DTT 2025`, val: dtt.toFixed(0), unit:'tỷ', sub:`<span class="up">▲ +18.3% YoY</span>` },
+    { lbl:`LNST 2025`, val: lnst.toFixed(0), unit:'tỷ', sub:`<span class="nu">Biên ${((lnst/dtt)*100).toFixed(1)}%</span>` },
+    { lbl:`YTD ${yr}`, val: ytd26.toFixed(0), unit:'tỷ', sub: ytd25 ? `<span class="${ytd26>ytd25?'up':'dn'}">${ytd26>ytd25?'▲':'▼'} ${Math.abs((ytd26-ytd25)/ytd25*100).toFixed(1)}% YoY</span>` : '' },
+    { lbl:`Tháng gần nhất`, val: lastVal.toFixed(0), unit:'tỷ', sub: momLast!==null ? `<span class="${momLast>=0?'up':'dn'}">${momLast>=0?'▲':'▼'} ${Math.abs(momLast).toFixed(1)}% MoM</span>` : '' },
+    { lbl:`EBITDA 2025`, val: ebitda.toFixed(0), unit:'tỷ', sub:`<span class="nu">Biên ${((ebitda/dtt)*100).toFixed(1)}%</span>` },
+  ].map(m=>`<div class="metric"><div class="metric-lbl">${m.lbl}</div><div class="metric-val">${m.val}<span class="metric-unit">${m.unit}</span></div><div class="metric-sub">${m.sub}</div></div>`).join('');
+
+  // Monthly bar
+  mkChart('c-ov-monthly',{ type:'bar', data:{ labels:MONTHS, datasets:[
+    { label:`${yr-1}`, data:rev25, backgroundColor:C.gray, borderRadius:3 },
+    { label:`${yr}`,   data:rev26, backgroundColor:C.blue, borderRadius:3 },
+  ]}, options: baseOpts({ scales:{x:{ticks:{color:txt,font:{size:11}},grid:{color:grid}},y:{ticks:{color:txt,font:{size:11},callback:v=>v+'B'},grid:{color:grid}}}}) });
+
+  // Pie by segment
+  const segTotals = Object.keys(SEGS).map(k=>({ key:k, val:revByMonth(yr,k).reduce((s,v)=>s+v,0) })).filter(s=>s.val>0);
+  const total = segTotals.reduce((s,x)=>s+x.val,0);
+  document.getElementById('pie-legend').innerHTML = segTotals.map(s=>`<span><span class="ld" style="background:${SEG_CLR[s.key]}"></span>${SEGS[s.key]} ${total?(s.val/total*100).toFixed(0):'0'}%</span>`).join('');
+  mkChart('c-ov-pie',{ type:'doughnut', data:{ labels:segTotals.map(s=>SEGS[s.key]), datasets:[{ data:segTotals.map(s=>s.val), backgroundColor:segTotals.map(s=>SEG_CLR[s.key]), borderWidth:2, borderColor:isDark?'#1c1c1a':'#fff' }]}, options:{ responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>ctx.label+': '+ctx.parsed.toFixed(1)+'B'}} } } });
+
+  // MoM
+  const mom = momPct(rev26);
+  mkChart('c-ov-mom',{ type:'bar', data:{ labels:MONTHS, datasets:[{ data:mom, backgroundColor:mom.map(v=>v===null?C.gray:v>=0?C.green:C.red), borderRadius:3 }]}, options:baseOpts({ scales:{x:{ticks:{color:txt,font:{size:11}},grid:{color:grid}},y:{ticks:{color:txt,font:{size:11},callback:v=>v+'%'},grid:{color:grid}}}}) });
+
+  // Progress
+  const budget = revBudgetByMonth(yr);
+  const totalBudget = budget.reduce((s,v)=>s+v,0);
+  const pctYTD = totalBudget ? (ytd26/totalBudget*100) : 0;
+  document.getElementById('ov-progress').innerHTML = [
+    { lbl:`YTD ${yr} vs KH năm`, val:ytd26.toFixed(0)+'B', pct:pctYTD, clr:pctYTD>=80?C.green:pctYTD>=60?C.amber:C.red },
+    { lbl:'YTD vs cùng kỳ', val:ytd25?((ytd26-ytd25)/ytd25*100).toFixed(1)+'%':'—', pct:ytd25?Math.min((ytd26/ytd25*100),100):0, clr:C.blue },
+  ].map(p=>`
+    <div class="prog">
+      <div class="prog-lbl"><span>${p.lbl}</span><span style="font-weight:500;color:var(--txt)">${p.val}</span></div>
+      <div class="prog-track"><div class="prog-fill" style="width:${Math.min(p.pct,100)}%;background:${p.clr}"></div></div>
+    </div>
+  `).join('') + `<hr><div style="font-size:11.5px;color:var(--txt2);margin-top:8px">
+    KH năm: <strong style="color:var(--txt)">${totalBudget.toFixed(0)}B</strong> &nbsp;·&nbsp;
+    Còn lại: <strong style="color:var(--txt)">${Math.max(totalBudget-ytd26,0).toFixed(0)}B</strong>
+  </div>`;
+}
+
+// ── REVENUE DETAIL ───────────────────────────────────────────
+function renderRevDetail() {
+  const yr = +document.getElementById('yr-select').value;
+  const filter = document.getElementById('rev-seg-filter')?.value || 'all';
+  const rev26 = revByMonth(yr);
+  const ytd = rev26.reduce((s,v)=>s+v,0);
+
+  // Segment metrics
+  document.getElementById('rev-metrics').innerHTML = Object.entries(SEGS).map(([k,lbl])=>{
+    const vals = revByMonth(yr,k);
+    const tot = vals.reduce((s,v)=>s+v,0);
+    const share = ytd ? (tot/ytd*100) : 0;
+    return `<div class="metric"><div class="metric-lbl" style="color:${SEG_CLR[k]}">${lbl}</div><div class="metric-val">${tot.toFixed(0)}<span class="metric-unit">tỷ</span></div><div class="metric-sub"><span class="nu">${share.toFixed(1)}% tổng YTD</span></div></div>`;
+  }).join('');
+
+  // Stacked or single
+  const datasets = filter === 'all'
+    ? Object.entries(SEGS).map(([k,lbl])=>({ label:lbl, data:revByMonth(yr,k), backgroundColor:SEG_CLR[k], borderRadius:3, stack:'s' }))
+    : [{ label:SEGS[filter], data:revByMonth(yr,filter), backgroundColor:SEG_CLR[filter], borderRadius:3 }];
+
+  mkChart('c-rev-seg',{ type:'bar', data:{ labels:MONTHS, datasets }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ x:{ stacked:filter==='all', ticks:{color:txt,font:{size:11}}, grid:{color:grid} }, y:{ stacked:filter==='all', ticks:{color:txt,font:{size:11},callback:v=>v+'B'}, grid:{color:grid} } } } });
+
+  // Actual vs Budget
+  const actual = revByMonth(yr);
+  const budget = revBudgetByMonth(yr);
+  mkChart('c-rev-vs-kh',{ type:'bar', data:{ labels:MONTHS, datasets:[
+    { label:'Kế hoạch', data:budget, backgroundColor:C.gray, borderRadius:3 },
+    { label:'Thực hiện', data:actual, backgroundColor:C.blue, borderRadius:3 },
+  ]}, options:baseOpts({ scales:{x:{ticks:{color:txt,font:{size:11}},grid:{color:grid}},y:{ticks:{color:txt,font:{size:11},callback:v=>v+'B'},grid:{color:grid}}}}) });
+
+  // Projects
+  const lastMonthWithData = Math.max(...DB.projects.filter(p=>p.year===yr).map(p=>p.month), 0);
+  const proj = DB.projects.filter(p=>p.year===yr&&p.month===lastMonthWithData).sort((a,b)=>b.revenue-a.revenue).slice(0,7);
+  mkChart('c-rev-proj',{ type:'bar', data:{ labels:proj.map(p=>p.project_name), datasets:[{ data:proj.map(p=>p.revenue), backgroundColor:proj.map(p=>SEG_CLR[p.segment]||C.blue), borderRadius:3 }]}, options:{ ...baseOpts(), indexAxis:'y', scales:{x:{ticks:{color:txt,font:{size:11},callback:v=>v+'B'},grid:{color:grid}},y:{ticks:{color:txt,font:{size:10,size:11}},grid:{display:false}}} } });
+}
+
+// ── PNL ─────────────────────────────────────────────────────
+function renderPnl() {
+  const pnl = DB.pnl.filter(r=>r.year===2025).sort((a,b)=>a.row_order-b.row_order);
+  const tbody = document.getElementById('pnl-body');
+  tbody.innerHTML = '';
+  pnl.forEach(r => {
+    if (r.row_type==='spacer') { tbody.innerHTML+='<tr><td colspan="4" style="height:6px"></td></tr>'; return; }
+    const p = pct(r.value,r.budget);
+    const tr = document.createElement('tr');
+    tr.className = r.row_type==='bold'?'bold':r.row_type==='total'?'total':r.row_type==='sub'?'sub':'';
+    tr.innerHTML = `<td>${r.label}</td><td>${r.value??'—'}</td><td>${r.budget??'—'}</td><td>${p!==null?badge(p):'—'}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // Bridge chart (Gross Profit → LNST)
+  const gp = (pnl.find(r=>r.label==='Lợi nhuận gộp')||{}).value||412;
+  const opex = (pnl.find(r=>r.label==='Tổng chi phí vận hành')||{}).value||424;
+  const da = (pnl.find(r=>r.label==='Khấu hao & lãi vay')||{}).value||76;
+  const tax = (pnl.find(r=>r.label==='Thuế TNDN')||{}).value||36;
+  const net = (pnl.find(r=>r.label==='Lợi nhuận sau thuế (LNST)')||{}).value||142;
+  mkChart('c-pnl-bridge',{ type:'bar', data:{ labels:['Lợi nhuận gộp','(-) OPEX','(-) KH & LS','(-) Thuế','LNST'],
+    datasets:[{ data:[gp,-opex,-da,-tax,net], backgroundColor:[C.green,C.red,C.amber,C.amber,C.blue], borderRadius:3 }]},
+    options:baseOpts({ scales:{x:{ticks:{color:txt,font:{size:11}},grid:{color:grid}},y:{ticks:{color:txt,font:{size:11},callback:v=>v+'B'},grid:{color:grid}}}}) });
+
+  // Margins
+  const dtt = (pnl.find(r=>r.label==='Doanh thu thuần')||{}).value||1284;
+  const ebitda = (pnl.find(r=>r.label==='EBITDA')||{}).value||218;
+  mkChart('c-pnl-margin',{ type:'bar', data:{ labels:['Biên GP','Biên EBITDA','Biên LNST'],
+    datasets:[{ data:[gp/dtt*100,ebitda/dtt*100,net/dtt*100].map(v=>+v.toFixed(1)), backgroundColor:[C.blue,C.green,C.amber], borderRadius:3 }]},
+    options:baseOpts({ scales:{x:{ticks:{color:txt,font:{size:11}},grid:{color:grid}},y:{ticks:{color:txt,font:{size:11},callback:v=>v+'%'},grid:{color:grid},max:40}}}) });
+}
+
+// ── BALANCE SHEET ────────────────────────────────────────────
+function renderBS() {
+  const bs = DB.bs.filter(r=>r.year===2025);
+  const sections = { assets:'TÀI SẢN', liabilities:'NỢ PHẢI TRẢ', equity:'VỐN CHỦ SỞ HỮU' };
+  document.getElementById('bs-container').innerHTML = Object.entries(sections).map(([key,lbl])=>`
+    <div class="card" style="margin-bottom:0">
+      <div class="card-title">${lbl}</div>
+      <table class="tbl">
+        <thead><tr><th style="text-align:left">Khoản mục</th><th>Giá trị</th></tr></thead>
+        <tbody>
+          ${bs.filter(r=>r.section===key).sort((a,b)=>a.row_order-b.row_order).map(r=>`
+            <tr class="${r.row_type}"><td>${r.label}</td><td>${r.value??'—'}</td></tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `).join('');
+}
+
+// ── CASH FLOW ────────────────────────────────────────────────
+function renderCF() {
+  const cf = DB.cf.filter(r=>r.year===2025);
+  const get = (sec,lbl) => (cf.find(r=>r.section===sec&&r.label===lbl)||{}).value||0;
+  const opTotal = get('operating','LCT từ hoạt động kinh doanh');
+  const invTotal = get('investing','LCT từ hoạt động đầu tư');
+  const finTotal = get('financing','LCT từ hoạt động tài chính');
+  mkChart('c-cf-bar',{ type:'bar', data:{
+    labels:['Hoạt động KD','Hoạt động ĐT','Hoạt động TC'],
+    datasets:[{ data:[opTotal,invTotal,finTotal], backgroundColor:[opTotal>=0?C.green:C.red,invTotal>=0?C.green:C.red,finTotal>=0?C.green:C.red], borderRadius:3 }]},
+    options:baseOpts({ scales:{x:{ticks:{color:txt,font:{size:11}},grid:{color:grid}},y:{ticks:{color:txt,font:{size:11},callback:v=>v+'B'},grid:{color:grid}}}}) });
+
+  const secs = { operating:'Hoạt động kinh doanh', investing:'Hoạt động đầu tư', financing:'Hoạt động tài chính' };
+  document.getElementById('cf-detail').innerHTML = `<table class="tbl"><thead><tr><th style="text-align:left">Khoản mục</th><th>Giá trị</th></tr></thead><tbody>
+    ${Object.entries(secs).map(([k,lbl])=>`
+      <tr class="bold"><td colspan="2" style="padding-top:10px">${lbl}</td></tr>
+      ${cf.filter(r=>r.section===k).sort((a,b)=>a.row_order-b.row_order).map(r=>`<tr class="${r.row_type}"><td>${r.label}</td><td style="color:${r.value<0?'var(--red)':'var(--txt)'}">${r.value??'—'}</td></tr>`).join('')}
+    `).join('')}
+  </tbody></table>`;
+}
+
+// ── KPI ─────────────────────────────────────────────────────
+function renderKpi() {
+  const yr = +document.getElementById('yr-select').value;
+  const kpi = DB.kpi.filter(r=>r.year===yr).sort((a,b)=>a.month-b.month);
+  const last = kpi[kpi.length-1]||{};
+  const prev = kpi[kpi.length-2]||{};
+
+  document.getElementById('kpi-metrics').innerHTML = [
+    { lbl:`Deal chốt (${MONTHS[(last.month||1)-1]})`, val:last.deals_closed||0, sub: prev.deals_closed ? `<span class="${last.deals_closed>=prev.deals_closed?'up':'dn'}">${last.deals_closed>=prev.deals_closed?'▲':'▼'} vs tháng trước</span>` : '' },
+    { lbl:'Tỉ lệ chốt', val:(last.conversion_rate||0).toFixed(1)+'%', sub:`<span class="nu">Pipeline: ${last.deals_pipeline||0}</span>` },
+    { lbl:'KH mới tháng này', val:last.new_customers||0, sub:`<span class="nu">Đang theo dõi: ${last.active_customers||0}</span>` },
+    { lbl:'Giá trị deal TB', val:(last.avg_deal_size||0).toFixed(1), unit:'tỷ', sub:'' },
+  ].map(m=>`<div class="metric"><div class="metric-lbl">${m.lbl}</div><div class="metric-val">${m.val}${m.unit?`<span class="metric-unit">${m.unit}</span>`:''}</div><div class="metric-sub">${m.sub}</div></div>`).join('');
+
+  const labels = kpi.map(k=>MONTHS[k.month-1]);
+  mkChart('c-kpi-deals',{ type:'bar', data:{ labels, datasets:[
+    { label:'Deal chốt', data:kpi.map(k=>k.deals_closed), backgroundColor:C.blue, borderRadius:3, yAxisID:'y' },
+    { label:'Tỉ lệ chốt (%)', data:kpi.map(k=>k.conversion_rate), type:'line', borderColor:C.amber, backgroundColor:'transparent', pointBackgroundColor:C.amber, yAxisID:'y2', tension:.3 },
+  ]}, options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{ticks:{color:txt,font:{size:11}},grid:{color:grid}},y:{ticks:{color:txt,font:{size:11}},grid:{color:grid}},y2:{ticks:{color:txt,font:{size:11},callback:v=>v+'%'},position:'right',grid:{display:false}}} } });
+
+  mkChart('c-kpi-cust',{ type:'bar', data:{ labels, datasets:[
+    { label:'KH mới', data:kpi.map(k=>k.new_customers), backgroundColor:C.green, borderRadius:3 },
+    { label:'Đang theo dõi', data:kpi.map(k=>k.active_customers), backgroundColor:C.gray, borderRadius:3 },
+  ]}, options:baseOpts({ scales:{x:{ticks:{color:txt,font:{size:11}},grid:{color:grid}},y:{ticks:{color:txt,font:{size:11}},grid:{color:grid}}}}) });
+}
+
+// ── SIDEBAR KPI ──────────────────────────────────────────────
+function renderSidebarKpi() {
+  const yr = +document.getElementById('yr-select').value;
+  const rev = revByMonth(yr);
+  const ytd = rev.reduce((s,v)=>s+v,0);
+  const last = rev.filter(v=>v>0).slice(-1)[0]||0;
+  document.getElementById('sidebar-kpi').innerHTML = [
+    { lbl:`YTD ${yr}`, val:ytd.toFixed(0)+'B' },
+    { lbl:'Tháng gần nhất', val:last.toFixed(0)+'B' },
+    { lbl:'LNST 2025', val:'142B' },
+    { lbl:'Biên GP', val:'32.1%' },
+  ].map(k=>`<div class="kpi-mini"><span class="kpi-mini-lbl">${k.lbl}</span><span class="kpi-mini-val">${k.val}</span></div>`).join('');
+  const lastKpi = DB.kpi.filter(r=>r.year===yr).slice(-1)[0];
+  if(lastKpi) document.getElementById('hd-period').textContent = `KPI: ${MONTHS[lastKpi.month-1]}/${yr}`;
+}
+
+// ── YEAR CHANGE ──────────────────────────────────────────────
+function changeYear() { renderAll(); }
+
+// ── NAV ──────────────────────────────────────────────────────
+function sw(id, btn) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+
+
+// ── AI ANALYSIS ──────────────────────────────────────────────
+function buildAIPrompt() {
+  const yr = +document.getElementById('yr-select').value;
+  const company = DB.config.company || 'Công ty';
+  const currency = DB.config.currency || 'tỷ đồng';
+
+  // PnL snapshot
+  const pnl25 = DB.pnl.filter(r=>r.year===2025).sort((a,b)=>a.row_order-b.row_order);
+  const pnlText = pnl25.map(r=>`  ${r.label}: TH=${r.value??'N/A'} | KH=${r.budget??'N/A'} ${currency}`).join('\n');
+
+  // Balance sheet
+  const bs25 = DB.bs.filter(r=>r.year===2025);
+  const bsText = bs25.map(r=>`  [${r.section}] ${r.label}: ${r.value??'N/A'} ${currency}`).join('\n');
+
+  // Cash flow
+  const cf25 = DB.cf.filter(r=>r.year===2025);
+  const cfText = cf25.map(r=>`  [${r.section}] ${r.label}: ${r.value??'N/A'} ${currency}`).join('\n');
+
+  // Monthly revenue
+  const revRows = DB.revenue.filter(r=>r.year===yr).sort((a,b)=>a.month-b.month);
+  const revByM = {};
+  revRows.forEach(r=>{ if(!revByM[r.month]) revByM[r.month]={month:r.month,total:0,budget:0,segs:{}}; revByM[r.month].segs[r.segment]=r.revenue; revByM[r.month].total+=r.revenue||0; revByM[r.month].budget+=r.budget||0; });
+  const revText = Object.values(revByM).map(m=>{
+    const mom = Object.values(revByM).find(x=>x.month===m.month-1);
+    const momPct = mom ? ((m.total-mom.total)/mom.total*100).toFixed(1)+'%' : 'N/A';
+    const vskh = m.budget ? ((m.total-m.budget)/m.budget*100).toFixed(1)+'%' : 'N/A';
+    return `  T${m.month}/${yr}: TH=${m.total.toFixed(1)} | KH=${m.budget.toFixed(1)} | vsKH=${vskh} | MoM=${momPct} | [${Object.entries(m.segs).map(([k,v])=>k+':'+v).join(', ')}]`;
+  }).join('\n');
+
+  // KPI
+  const kpiRows = DB.kpi.filter(r=>r.year===yr).sort((a,b)=>a.month-b.month);
+  const kpiText = kpiRows.map(r=>`  T${r.month}/${yr}: deals=${r.deals_closed} | pipeline=${r.deals_pipeline} | conv=${r.conversion_rate}% | new_cust=${r.new_customers} | active=${r.active_customers} | avg_deal=${r.avg_deal_size}B`).join('\n');
+
+  // Projects (latest month)
+  const lastProjMon = Math.max(...DB.projects.filter(p=>p.year===yr).map(p=>p.month),0);
+  const projText = DB.projects.filter(p=>p.year===yr&&p.month===lastProjMon).map(p=>`  ${p.project_name} (${p.segment}): ${p.revenue}B`).join('\n');
+
+  const ytd = Object.values(revByM).reduce((s,m)=>s+m.total,0);
+  const ytdBudget = Object.values(revByM).reduce((s,m)=>s+m.budget,0);
+
+  return `Bạn là chuyên gia phân tích tài chính cao cấp. Hãy phân tích toàn diện số liệu kinh doanh dưới đây và đưa ra báo cáo đánh giá TRUNG LẬP, NGẮN GỌN theo cấu trúc sau:
+
+**YÊU CẦU OUTPUT** — Trả về JSON hợp lệ theo đúng cấu trúc này, KHÔNG thêm bất kỳ text nào ngoài JSON:
+{
+  "verdict": "TÍCH CỰC" | "TRUNG BÌNH" | "CẦN CHÚ Ý",
+  "verdict_reason": "1 câu tóm tắt lý do",
+  "highlights": [
+    {"type": "good"|"warn"|"alert"|"info", "title": "tiêu đề ngắn", "body": "phân tích 2-3 câu có số liệu cụ thể"}
+  ],
+  "scores": [
+    {"label": "Tăng trưởng DT", "score": 0-100, "comment": "ngắn"},
+    {"label": "Hiệu quả sinh lời", "score": 0-100, "comment": "ngắn"},
+    {"label": "Sức khỏe dòng tiền", "score": 0-100, "comment": "ngắn"},
+    {"label": "KPI vận hành", "score": 0-100, "comment": "ngắn"},
+    {"label": "Tiến độ vs Kế hoạch", "score": 0-100, "comment": "ngắn"}
+  ],
+  "risks": ["rủi ro 1", "rủi ro 2", "rủi ro 3"],
+  "actions": [
+    {"priority": "CAO"|"TRUNG BÌNH"|"THẤP", "action": "hành động cụ thể", "owner": "BOD/CFO/CMO/Sales"}
+  ],
+  "one_liner": "1 câu tóm tắt toàn bộ tình hình cho CEO đọc trong 5 giây"
+}
+
+---
+**DỮ LIỆU CÔNG TY: ${company}**
+Đơn vị: ${currency}
+
+## BCTC 2025 — P&L
+${pnlText}
+
+## BCTC 2025 — Bảng cân đối kế toán
+${bsText}
+
+## BCTC 2025 — Lưu chuyển tiền tệ
+${cfText}
+
+## DOANH THU ${yr} THEO THÁNG (TH=thực hiện, KH=kế hoạch)
+YTD tổng: ${ytd.toFixed(1)} | YTD budget: ${ytdBudget.toFixed(1)}
+${revText}
+
+## KPI VẬN HÀNH ${yr}
+${kpiText}
+
+## TOP DỰ ÁN (T${lastProjMon}/${yr})
+${projText || 'Chưa có dữ liệu'}
+`;
+}
+
+function renderAIOutput(data) {
+  const verdictColor = data.verdict==='TÍCH CỰC' ? 'var(--green)' : data.verdict==='CẦN CHÚ Ý' ? 'var(--red)' : 'var(--amber)';
+  const verdictBg = data.verdict==='TÍCH CỰC' ? 'var(--green-bg)' : data.verdict==='CẦN CHÚ Ý' ? 'var(--red-bg)' : 'var(--amber-bg)';
+  const typeMap = { good:'highlight-green', warn:'highlight-amber', alert:'highlight-red', info:'highlight-blue' };
+  const typeIcon = { good:'✅', warn:'⚠️', alert:'🔴', info:'💡' };
+  const prioColor = { 'CAO':'var(--red-txt)', 'TRUNG BÌNH':'var(--amber-txt)', 'THẤP':'var(--green-txt)' };
+  const prioBg = { 'CAO':'var(--red-bg)', 'TRUNG BÌNH':'var(--amber-bg)', 'THẤP':'var(--green-bg)' };
+
+  let html = '';
+
+  // One liner + verdict
+  html += `<div class="ai-section" style="border-left:3px solid ${verdictColor};background:${verdictBg};margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:22px;font-weight:500;color:${verdictColor}">${data.verdict}</span>
+      <span style="font-size:13px;color:var(--txt2)">—</span>
+      <span style="font-size:13px;color:var(--txt2);flex:1">${data.verdict_reason||''}</span>
+    </div>
+    ${data.one_liner ? `<div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);font-size:13px;color:var(--txt);font-style:italic">"${data.one_liner}"</div>` : ''}
+  </div>`;
+
+  // Highlights
+  if(data.highlights?.length) {
+    html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin-bottom:12px">`;
+    data.highlights.forEach(h => {
+      html += `<div class="ai-section ${typeMap[h.type]||'highlight-blue'}" style="margin-bottom:0">
+        <div class="ai-section-title">${typeIcon[h.type]||'💡'} ${h.title||''}</div>
+        <div class="ai-section-body">${h.body||''}</div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  // Scores
+  if(data.scores?.length) {
+    html += `<div class="ai-section" style="margin-bottom:12px">
+      <div class="ai-section-title">📊 Điểm đánh giá</div>`;
+    data.scores.forEach(s => {
+      const clr = s.score>=70?'var(--green)':s.score>=50?'var(--amber)':'var(--red)';
+      html += `<div class="rating-bar">
+        <span class="rating-bar-lbl">${s.label}</span>
+        <div class="rating-bar-track"><div class="rating-bar-fill" style="width:${s.score}%;background:${clr}"></div></div>
+        <span class="rating-bar-val">${s.score}</span>
+        <span style="font-size:11px;color:var(--txt3);margin-left:8px;flex:1">${s.comment||''}</span>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  // Two-col: Risks + Actions
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">`;
+
+  // Risks
+  if(data.risks?.length) {
+    html += `<div class="ai-section" style="margin-bottom:0">
+      <div class="ai-section-title">⚡ Rủi ro cần theo dõi</div>`;
+    data.risks.forEach((r,i) => {
+      html += `<div class="ai-kv"><span class="ai-kv-lbl">Rủi ro ${i+1}</span><span class="ai-kv-val" style="text-align:right;max-width:200px">${r}</span></div>`;
+    });
+    html += '</div>';
+  }
+
+  // Actions
+  if(data.actions?.length) {
+    html += `<div class="ai-section" style="margin-bottom:0">
+      <div class="ai-section-title">🎯 Khuyến nghị hành động</div>`;
+    data.actions.forEach(a => {
+      html += `<div style="padding:7px 0;border-bottom:0.5px solid var(--border);display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="tag" style="background:${prioBg[a.priority]};color:${prioColor[a.priority]}">${a.priority}</span>
+          <span style="font-size:10px;color:var(--txt3)">${a.owner||''}</span>
+        </div>
+        <span style="font-size:12.5px;color:var(--txt)">${a.action||''}</span>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  html += '</div>';
+
+  document.getElementById('ai-output').innerHTML = html;
+  document.getElementById('ai-ts').textContent = 'Phân tích lúc ' + new Date().toLocaleString('vi-VN');
+}
+
+async function runAI() {
+  const btn = document.getElementById('ai-run-btn');
+  const placeholder = document.getElementById('ai-placeholder');
+  const resultDiv = document.getElementById('ai-result');
+  const errDiv = document.getElementById('ai-error');
+  const output = document.getElementById('ai-output');
+
+  btn.classList.add('loading');
+  btn.disabled = true;
+  placeholder.style.display = 'none';
+  resultDiv.style.display = 'none';
+  errDiv.style.display = 'none';
+
+  // Show streaming indicator
+  resultDiv.style.display = 'block';
+  output.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:20px;color:var(--txt2);font-size:13px"><div style="width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite"></div>Claude đang phân tích dữ liệu...</div>';
+
+  try {
+    const prompt = buildAIPrompt();
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1500,
+        system: 'Bạn là chuyên gia phân tích tài chính. Luôn trả về JSON hợp lệ, không có markdown code block, không có text ngoài JSON.',
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error('API error: ' + errText);
+    }
+
+    const data = await response.json();
+    const rawText = data.content?.[0]?.text || '';
+
+    // Parse JSON - strip any accidental markdown
+    const cleaned = rawText.replace(/^```json\n?/,'').replace(/^```\n?/,'').replace(/\n?```$/,'').trim();
+    let parsed;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch(e) {
+      // Fallback: show raw text if JSON parse fails
+      output.innerHTML = `<div class="ai-section highlight-blue"><div class="ai-section-title">📄 Phân tích</div><div class="ai-section-body" style="white-space:pre-wrap">${rawText}</div></div>`;
+      document.getElementById('ai-ts').textContent = 'Phân tích lúc ' + new Date().toLocaleString('vi-VN');
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      return;
+    }
+
+    renderAIOutput(parsed);
+
+  } catch(e) {
+    resultDiv.style.display = 'none';
+    placeholder.style.display = 'flex';
+    errDiv.style.display = 'block';
+    errDiv.textContent = 'Lỗi: ' + e.message;
+    console.error(e);
+  }
+
+  btn.classList.remove('loading');
+  btn.disabled = false;
+}
+
+// ── BOOT ────────────────────────────────────────────────────
+loadAll().catch(e => {
+  document.getElementById('loading-msg').textContent = 'Lỗi kết nối Supabase. Kiểm tra URL và Key.';
+  console.error(e);
+});
+</script>
+</body>
+</html>
