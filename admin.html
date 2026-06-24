@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — BOD Dashboard</title>
+<style>
+:root {
+  --bg:#f7f7f5; --bg2:#fff; --bg3:#eeecea;
+  --txt:#1a1a18; --txt2:#6b6b67; --txt3:#9b9b96;
+  --border:rgba(0,0,0,.1); --border2:rgba(0,0,0,.18);
+  --blue:#185FA5; --blue-bg:#E6F1FB; --blue-txt:#0C447C;
+  --green:#1D9E75; --green-bg:#E1F5EE; --green-txt:#0F6E56;
+  --red:#E24B4A; --red-bg:#FCEBEB; --red-txt:#A32D2D;
+  --amber:#EF9F27; --amber-bg:#FAEEDA; --amber-txt:#854F0B;
+  --r:8px; --rlg:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+
+/* LOGIN */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg)}
+.login-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rlg);padding:36px 40px;width:360px;text-align:center}
+.login-card h1{font-size:18px;font-weight:500;margin-bottom:6px}
+.login-card p{font-size:13px;color:var(--txt2);margin-bottom:24px}
+.login-card input{width:100%;padding:10px 14px;font-size:14px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--txt);margin-bottom:12px;outline:none}
+.login-card input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,.12)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;font-size:13px;font-weight:500;border-radius:var(--r);cursor:pointer;border:none;transition:all .12s}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue-txt)}
+.btn-secondary{background:var(--bg2);color:var(--txt);border:0.5px solid var(--border2)}
+.btn-secondary:hover{background:var(--bg3)}
+.btn-danger{background:var(--red-bg);color:var(--red-txt);border:0.5px solid var(--red)}
+.btn-success{background:var(--green-bg);color:var(--green-txt);border:0.5px solid var(--green)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-full{width:100%}
+.err-msg{font-size:12px;color:var(--red-txt);background:var(--red-bg);padding:8px 12px;border-radius:var(--r);margin-top:8px;display:none}
+
+/* TOPBAR */
+#app{display:none}
+.topbar{background:var(--bg2);border-bottom:0.5px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.logo{background:var(--blue);color:#fff;font-size:11px;font-weight:700;padding:4px 8px;border-radius:5px;letter-spacing:.4px}
+.topbar-title{font-size:14px;font-weight:500}
+.topbar-sub{font-size:11px;color:var(--txt2);margin-top:1px}
+
+/* LAYOUT */
+.layout{display:flex;min-height:calc(100vh - 52px)}
+.sidebar{width:200px;background:var(--bg2);border-right:0.5px solid var(--border);padding:16px 0;flex-shrink:0}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 16px;font-size:13px;color:var(--txt2);cursor:pointer;transition:.12s;border:none;background:none;width:100%;text-align:left;border-right:2px solid transparent}
+.nav-item:hover{background:var(--bg3);color:var(--txt)}
+.nav-item.active{color:var(--blue);background:var(--blue-bg);border-right-color:var(--blue);font-weight:500}
+.nav-section{font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.7px;padding:12px 16px 4px}
+
+.main{flex:1;padding:24px;overflow-x:hidden}
+.panel{display:none}.panel.active{display:block}
+
+/* CARDS */
+.card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rlg);padding:18px 20px;margin-bottom:16px}
+.card-title{font-size:13px;font-weight:500;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.section-hd{margin-bottom:16px}
+.section-hd h2{font-size:15px;font-weight:500}
+.section-hd p{font-size:12px;color:var(--txt2);margin-top:2px}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group label{font-size:11px;font-weight:500;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px}
+.form-group input,.form-group select,.form-group textarea{padding:8px 11px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--txt);outline:none;font-family:inherit}
+.form-group input:focus,.form-group select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,.1)}
+.form-group textarea{resize:vertical;min-height:72px}
+.form-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;padding:7px 10px;text-align:right;border-bottom:0.5px solid var(--border2);white-space:nowrap}
+.tbl th:first-child,.tbl th:nth-child(2){text-align:left}
+.tbl td{padding:7px 10px;border-bottom:0.5px solid var(--border);text-align:right;color:var(--txt2)}
+.tbl td:first-child{text-align:left;color:var(--txt)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr.bold td{font-weight:600;color:var(--txt);background:var(--bg)}
+.tbl tr.total td{font-weight:600;color:var(--txt);border-top:0.5px solid var(--border2)}
+.tbl tr.sub td:first-child{padding-left:22px;font-size:12px}
+.tbl input[type=number]{width:100%;text-align:right;border:0.5px solid transparent;background:transparent;color:var(--txt);font-size:12.5px;padding:2px 4px;border-radius:4px;outline:none}
+.tbl input[type=number]:focus{border-color:var(--blue);background:var(--blue-bg);box-shadow:0 0 0 2px rgba(24,95,165,.12)}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px}
+.b-ok{background:var(--green-bg);color:var(--green-txt)}
+.b-err{background:var(--red-bg);color:var(--red-txt)}
+.b-info{background:var(--blue-bg);color:var(--blue-txt)}
+.b-warn{background:var(--amber-bg);color:var(--amber-txt)}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;padding:12px 18px;border-radius:var(--r);font-size:13px;font-weight:500;color:#fff;z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none}
+#toast.show{opacity:1}
+#toast.ok{background:var(--green)}
+#toast.err{background:var(--red)}
+
+/* STATUS ROW */
+.status-row{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg);border-radius:var(--r);font-size:12px;margin-bottom:12px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
+.dot.red{background:var(--red)}.dot.amber{background:var(--amber)}
+
+/* MONTH GRID */
+.month-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px}
+.mtab{padding:5px 12px;font-size:12px;border-radius:99px;border:0.5px solid var(--border2);cursor:pointer;background:var(--bg2);color:var(--txt2);transition:.1s}
+.mtab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.mtab.has-data{border-color:var(--green);color:var(--green-txt)}
+.mtab.has-data.active{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* SEGMENT GRID */
+.seg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.seg-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.seg-card label{display:block;font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.seg-card .seg-name{font-size:13px;font-weight:500;color:var(--txt);margin-bottom:8px}
+.seg-card input{width:100%;padding:8px 10px;font-size:15px;font-weight:500;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--txt);outline:none;text-align:right}
+.seg-card input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,.1)}
+.seg-card .seg-budget{font-size:11px;color:var(--txt3);margin-top:4px;text-align:right}
+
+/* PROJECT TABLE */
+.proj-row{display:grid;grid-template-columns:1fr 140px 120px 120px 36px;gap:8px;align-items:center;padding:6px 0;border-bottom:0.5px solid var(--border)}
+.proj-row:last-child{border-bottom:none}
+.proj-row input,.proj-row select{padding:6px 9px;font-size:12.5px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--txt);outline:none;width:100%}
+.proj-row input:focus,.proj-row select:focus{border-color:var(--blue)}
+.del-btn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:var(--red-bg);color:var(--red-txt);border-radius:var(--r);cursor:pointer;font-size:14px;flex-shrink:0}
+
+/* CONFIG */
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.cfg-grid{grid-template-columns:1fr}.seg-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div style="font-size:28px;margin-bottom:12px">📊</div>
+    <h1>BOD Dashboard Admin</h1>
+    <p>Nhập mật khẩu để vào trang quản trị</p>
+    <input type="password" id="pwd-input" placeholder="Mật khẩu" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn btn-primary btn-full" onclick="doLogin()">Đăng nhập</button>
+    <div class="err-msg" id="login-err">Mật khẩu không đúng</div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">ADMIN</div>
+    <div>
+      <div class="topbar-title">BOD Dashboard — Quản trị dữ liệu</div>
+      <div class="topbar-sub" id="company-name-top">Đang tải...</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="conn-status" class="badge b-info">Đang kết nối...</span>
+    <a href="index.html" target="_blank" class="btn btn-secondary" style="font-size:12px">Xem Dashboard ↗</a>
+    <button class="btn btn-secondary" onclick="doLogout()" style="font-size:12px">Đăng xuất</button>
+  </div>
+</div>
+
+<div class="layout">
+<aside class="sidebar">
+  <div class="nav-section">Dữ liệu động</div>
+  <button class="nav-item active" onclick="switchTab('monthly',this)">📅 Doanh thu tháng</button>
+  <button class="nav-item" onclick="switchTab('kpi',this)">📌 KPI vận hành</button>
+  <button class="nav-item" onclick="switchTab('projects',this)">🏢 Theo dự án</button>
+  <div class="nav-section">BCTC tĩnh 2025</div>
+  <button class="nav-item" onclick="switchTab('pnl',this)">📋 P&L / Kết quả KD</button>
+  <button class="nav-item" onclick="switchTab('balance',this)">⚖️ Bảng CĐKT</button>
+  <button class="nav-item" onclick="switchTab('cashflow',this)">🔄 Lưu chuyển tiền</button>
+  <div class="nav-section">Hệ thống</div>
+  <button class="nav-item" onclick="switchTab('config',this)">⚙️ Cấu hình</button>
+</aside>
+
+<main class="main">
+
+<!-- MONTHLY REVENUE -->
+<div id="tab-monthly" class="panel active">
+  <div class="section-hd">
+    <h2>Doanh thu hàng tháng</h2>
+    <p>Chọn năm và tháng → nhập số liệu → lưu</p>
+  </div>
+  <div class="card">
+    <div class="card-title">
+      <span>Chọn kỳ</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="rev-year" onchange="loadMonthlyStatus()" style="font-size:13px;padding:5px 9px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--txt)">
+          <option value="2025">2025</option>
+          <option value="2026" selected>2026</option>
+          <option value="2027">2027</option>
+        </select>
+      </div>
+    </div>
+    <div class="month-tabs" id="month-tabs"></div>
+    <div id="monthly-form"></div>
+  </div>
+</div>
+
+<!-- KPI -->
+<div id="tab-kpi" class="panel">
+  <div class="section-hd">
+    <h2>KPI vận hành hàng tháng</h2>
+    <p>Số deal, tỉ lệ chốt, khách hàng</p>
+  </div>
+  <div class="card">
+    <div class="card-title">
+      <span>Chọn kỳ</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="kpi-year" onchange="loadKpiForm()" style="font-size:13px;padding:5px 9px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--txt)">
+          <option value="2025">2025</option>
+          <option value="2026" selected>2026</option>
+        </select>
+        <select id="kpi-month" onchange="loadKpiForm()" style="font-size:13px;padding:5px 9px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--txt)"></select>
+      </div>
+    </div>
+    <div id="kpi-form"></div>
+  </div>
+</div>
+
+<!-- PROJECTS -->
+<div id="tab-projects" class="panel">
+  <div class="section-hd">
+    <h2>Doanh thu theo dự án</h2>
+    <p>Breakdown chi tiết doanh thu theo từng dự án trong tháng</p>
+  </div>
+  <div class="card">
+    <div class="card-title">
+      <span>Chọn kỳ</span>
+      <div style="display:flex;gap:8px">
+        <select id="proj-year" style="font-size:13px;padding:5px 9px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--txt)">
+          <option value="2025">2025</option><option value="2026" selected>2026</option>
+        </select>
+        <select id="proj-month" style="font-size:13px;padding:5px 9px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--txt)"></select>
+        <button class="btn btn-secondary" onclick="loadProjects()" style="font-size:12px">Tải</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <div style="display:grid;grid-template-columns:1fr 140px 120px 120px 36px;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border2)">
+        <span style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px">Tên dự án</span>
+        <span style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px">Mảng</span>
+        <span style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;text-align:right">Doanh thu (tỷ)</span>
+        <span></span><span></span>
+      </div>
+      <div id="proj-rows"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border)">
+      <button class="btn btn-secondary" onclick="addProjRow()" style="font-size:12px">+ Thêm dự án</button>
+      <button class="btn btn-primary" onclick="saveProjects()" style="font-size:12px">Lưu tất cả</button>
+    </div>
+  </div>
+</div>
+
+<!-- PNL -->
+<div id="tab-pnl" class="panel">
+  <div class="section-hd">
+    <h2>Báo cáo kết quả kinh doanh (P&L)</h2>
+    <p>Nhấp vào ô số để chỉnh sửa trực tiếp</p>
+  </div>
+  <div class="card">
+    <div class="card-title">
+      <span>Năm tài chính</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="pnl-year" onchange="loadPnl()" style="font-size:13px;padding:5px 9px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--txt)">
+          <option value="2024">2024</option><option value="2025" selected>2025</option>
+        </select>
+        <button class="btn btn-primary" onclick="savePnl()" style="font-size:12px">Lưu thay đổi</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="tbl" id="pnl-tbl">
+        <thead><tr>
+          <th style="text-align:left;min-width:220px">Chỉ tiêu</th>
+          <th>Thực hiện</th>
+          <th>Kế hoạch</th>
+          <th>vs KH</th>
+        </tr></thead>
+        <tbody id="pnl-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- BALANCE SHEET -->
+<div id="tab-balance" class="panel">
+  <div class="section-hd">
+    <h2>Bảng cân đối kế toán</h2>
+    <p>Tài sản · Nợ phải trả · Vốn chủ sở hữu</p>
+  </div>
+  <div class="card">
+    <div class="card-title">
+      <span>Năm tài chính</span>
+      <div style="display:flex;gap:8px">
+        <select id="bs-year" onchange="loadBS()" style="font-size:13px;padding:5px 9px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--txt)">
+          <option value="2024">2024</option><option value="2025" selected>2025</option>
+        </select>
+        <button class="btn btn-primary" onclick="saveBS()" style="font-size:12px">Lưu</button>
+      </div>
+    </div>
+    <div id="bs-container" style="display:grid;grid-template-columns:1fr 1fr;gap:16px"></div>
+  </div>
+</div>
+
+<!-- CASH FLOW -->
+<div id="tab-cashflow" class="panel">
+  <div class="section-hd">
+    <h2>Báo cáo lưu chuyển tiền tệ</h2>
+  </div>
+  <div class="card">
+    <div class="card-title">
+      <span>Năm tài chính</span>
+      <div style="display:flex;gap:8px">
+        <select id="cf-year" onchange="loadCF()" style="font-size:13px;padding:5px 9px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--txt)">
+          <option value="2024">2024</option><option value="2025" selected>2025</option>
+        </select>
+        <button class="btn btn-primary" onclick="saveCF()" style="font-size:12px">Lưu</button>
+      </div>
+    </div>
+    <div id="cf-container" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px"></div>
+  </div>
+</div>
+
+<!-- CONFIG -->
+<div id="tab-config" class="panel">
+  <div class="section-hd"><h2>Cấu hình hệ thống</h2></div>
+  <div class="card">
+    <div class="card-title">Thông tin công ty</div>
+    <div class="cfg-grid">
+      <div class="form-group"><label>Tên công ty</label><input type="text" id="cfg-company" placeholder="Tên công ty"></div>
+      <div class="form-group"><label>Năm tài chính</label><input type="number" id="cfg-year" value="2025"></div>
+      <div class="form-group"><label>Đơn vị tiền tệ</label><input type="text" id="cfg-currency" placeholder="tỷ đồng"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-primary" onclick="saveConfig()">Lưu cấu hình</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Kết nối Supabase</div>
+    <div class="cfg-grid">
+      <div class="form-group"><label>Supabase URL</label><input type="text" id="cfg-url" placeholder="https://xxx.supabase.co"></div>
+      <div class="form-group"><label>Anon Key</label><input type="text" id="cfg-key" placeholder="eyJ..."></div>
+    </div>
+    <p style="font-size:11px;color:var(--txt3);margin:8px 0 12px">URL và Key được lưu trong localStorage của trình duyệt này.</p>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="saveSupabaseCfg()">Lưu kết nối</button>
+      <button class="btn btn-secondary" onclick="testConn()">Test kết nối</button>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────
+const ADMIN_PWD = 'BOD2026';
+const MONTHS = ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
+const SEGMENTS = [
+  { key:'primary',   label:'Sơ cấp',    color:'#185FA5' },
+  { key:'branded',   label:'Branded',   color:'#1D9E75' },
+  { key:'secondary', label:'Thứ cấp',   color:'#EF9F27' },
+  { key:'service',   label:'Dịch vụ',  color:'#B4B2A9' },
+];
+
+let SB_URL = localStorage.getItem('bod_sb_url') || '';
+let SB_KEY  = localStorage.getItem('bod_sb_key') || '';
+
+// Default Supabase — thay bằng project của bạn
+if(!SB_URL) SB_URL = 'https://fjzrcvuivtpevxzadwfy.supabase.co';
+if(!SB_KEY) SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZqenJjdnVpdnRwZXZ4emFkd2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NDg0NDEsImV4cCI6MjA5NTUyNDQ0MX0.lMOCRTaj3xeaTagohksZgZrXa-0PCwUmRZYdGQ7Luq4';
+
+// ── SUPABASE HELPERS ─────────────────────────────────────────
+async function sbFetch(table, params = '') {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}${params}`, {
+    headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' }
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbUpsert(table, data) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(Array.isArray(data) ? data : [data])
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbDel(table, params) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}${params}`, {
+    method: 'DELETE',
+    headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }
+  });
+  if (!r.ok) throw new Error(await r.text());
+}
+
+// ── TOAST ────────────────────────────────────────────────────
+function toast(msg, type = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `show ${type}`;
+  setTimeout(() => t.className = '', 2800);
+}
+
+// ── LOGIN ────────────────────────────────────────────────────
+function doLogin() {
+  const v = document.getElementById('pwd-input').value;
+  if (v === ADMIN_PWD) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    initApp();
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+    document.getElementById('pwd-input').value = '';
+  }
+}
+function doLogout() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('pwd-input').value = '';
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+async function initApp() {
+  // Prefill Supabase config inputs
+  document.getElementById('cfg-url').value = SB_URL;
+  document.getElementById('cfg-key').value = SB_KEY;
+  // Populate month selects
+  ['kpi-month','proj-month'].forEach(id => {
+    const el = document.getElementById(id);
+    MONTHS.forEach((m,i) => { const o = document.createElement('option'); o.value = i+1; o.textContent = m; if(i===4) o.selected=true; el.appendChild(o); });
+  });
+  await testConn(true);
+  loadMonthlyStatus();
+  loadKpiForm();
+  loadProjects();
+  loadPnl();
+  loadConfig();
+}
+
+async function testConn(silent = false) {
+  const el = document.getElementById('conn-status');
+  try {
+    await sbFetch('bod_config', '?id=eq.main&select=company');
+    el.textContent = '● Đã kết nối';
+    el.className = 'badge b-ok';
+    if (!silent) toast('Kết nối Supabase thành công ✓');
+  } catch(e) {
+    el.textContent = '● Lỗi kết nối';
+    el.className = 'badge b-err';
+    if (!silent) toast('Lỗi kết nối: ' + e.message, 'err');
+  }
+}
+
+// ── MONTHLY REVENUE ──────────────────────────────────────────
+let monthlyData = {};
+
+async function loadMonthlyStatus() {
+  const yr = +document.getElementById('rev-year').value;
+  const rows = await sbFetch('bod_monthly_revenue', `?year=eq.${yr}&order=month.asc`);
+  monthlyData = {};
+  rows.forEach(r => {
+    if (!monthlyData[r.month]) monthlyData[r.month] = {};
+    monthlyData[r.month][r.segment] = { revenue: r.revenue, budget: r.budget };
+  });
+  renderMonthTabs(yr);
+  renderMonthlyForm(1);
+}
+
+function renderMonthTabs(yr) {
+  const wrap = document.getElementById('month-tabs');
+  wrap.innerHTML = '';
+  MONTHS.forEach((m, i) => {
+    const mn = i + 1;
+    const has = monthlyData[mn] && Object.keys(monthlyData[mn]).length > 0;
+    const btn = document.createElement('button');
+    btn.className = 'mtab' + (has ? ' has-data' : '') + (mn === 1 ? ' active' : '');
+    btn.textContent = m;
+    btn.onclick = () => {
+      document.querySelectorAll('.mtab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderMonthlyForm(mn);
+    };
+    wrap.appendChild(btn);
+  });
+}
+
+function renderMonthlyForm(month) {
+  const yr = +document.getElementById('rev-year').value;
+  const data = monthlyData[month] || {};
+  const form = document.getElementById('monthly-form');
+  form.innerHTML = `
+    <div style="font-size:12px;color:var(--txt2);margin-bottom:12px">
+      Năm <strong>${yr}</strong> — <strong>${MONTHS[month-1]}</strong> &nbsp;·&nbsp; Đơn vị: tỷ đồng
+    </div>
+    <div class="seg-grid">
+      ${SEGMENTS.map(s => {
+        const d = data[s.key] || {};
+        return `
+        <div class="seg-card">
+          <div class="seg-name" style="color:${s.color}">${s.label}</div>
+          <label>Thực hiện</label>
+          <input type="number" id="rev-${s.key}-actual" value="${d.revenue||''}" placeholder="0" step="0.01" min="0">
+          <label style="margin-top:8px">Kế hoạch</label>
+          <input type="number" id="rev-${s.key}-budget" value="${d.budget||''}" placeholder="0" step="0.01" min="0">
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:0.5px solid var(--border)">
+      <button class="btn btn-primary" onclick="saveMonthly(${yr},${month})">Lưu ${MONTHS[month-1]}/${yr}</button>
+      <button class="btn btn-secondary" onclick="clearMonthly(${yr},${month})">Xoá tháng này</button>
+    </div>
+  `;
+}
+
+async function saveMonthly(yr, month) {
+  const rows = SEGMENTS.map(s => ({
+    year: yr, month,
+    segment: s.key,
+    revenue: parseFloat(document.getElementById(`rev-${s.key}-actual`).value) || 0,
+    budget:  parseFloat(document.getElementById(`rev-${s.key}-budget`).value)  || 0,
+  }));
+  try {
+    await sbUpsert('bod_monthly_revenue', rows);
+    if (!monthlyData[month]) monthlyData[month] = {};
+    rows.forEach(r => { monthlyData[month][r.segment] = { revenue: r.revenue, budget: r.budget }; });
+    renderMonthTabs(yr);
+    document.querySelectorAll('.mtab')[month-1].classList.add('active');
+    toast(`Đã lưu doanh thu ${MONTHS[month-1]}/${yr} ✓`);
+  } catch(e) { toast('Lỗi lưu: ' + e.message, 'err'); }
+}
+
+async function clearMonthly(yr, month) {
+  if (!confirm(`Xoá dữ liệu ${MONTHS[month-1]}/${yr}?`)) return;
+  await sbDel('bod_monthly_revenue', `?year=eq.${yr}&month=eq.${month}`);
+  delete monthlyData[month];
+  renderMonthTabs(yr);
+  renderMonthlyForm(month);
+  toast(`Đã xoá ${MONTHS[month-1]}/${yr}`);
+}
+
+// ── KPI ─────────────────────────────────────────────────────
+async function loadKpiForm() {
+  const yr = +document.getElementById('kpi-year').value;
+  const mn = +document.getElementById('kpi-month').value;
+  let d = {};
+  try {
+    const rows = await sbFetch('bod_monthly_kpi', `?year=eq.${yr}&month=eq.${mn}&limit=1`);
+    if (rows.length) d = rows[0];
+  } catch(e) {}
+  document.getElementById('kpi-form').innerHTML = `
+    <div class="form-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:14px">
+      <div class="form-group"><label>Số deal chốt</label><input type="number" id="kpi-closed" value="${d.deals_closed||0}" min="0"></div>
+      <div class="form-group"><label>Deal đang xử lý</label><input type="number" id="kpi-pipeline" value="${d.deals_pipeline||0}" min="0"></div>
+      <div class="form-group"><label>Tỉ lệ chốt (%)</label><input type="number" id="kpi-conv" value="${d.conversion_rate||0}" step="0.1" min="0" max="100"></div>
+      <div class="form-group"><label>Khách hàng mới</label><input type="number" id="kpi-newcust" value="${d.new_customers||0}" min="0"></div>
+      <div class="form-group"><label>KH đang theo dõi</label><input type="number" id="kpi-active" value="${d.active_customers||0}" min="0"></div>
+      <div class="form-group"><label>Giá trị deal TB (tỷ)</label><input type="number" id="kpi-avgdeal" value="${d.avg_deal_size||0}" step="0.01" min="0"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:14px"><label>Ghi chú</label><textarea id="kpi-note" placeholder="Tóm tắt tháng...">${d.note||''}</textarea></div>
+    <button class="btn btn-primary" onclick="saveKpi(${yr},${mn})">Lưu KPI ${MONTHS[mn-1]}/${yr}</button>
+  `;
+}
+
+async function saveKpi(yr, mn) {
+  const payload = {
+    year: yr, month: mn,
+    deals_closed:    +document.getElementById('kpi-closed').value,
+    deals_pipeline:  +document.getElementById('kpi-pipeline').value,
+    conversion_rate: +document.getElementById('kpi-conv').value,
+    new_customers:   +document.getElementById('kpi-newcust').value,
+    active_customers:+document.getElementById('kpi-active').value,
+    avg_deal_size:   +document.getElementById('kpi-avgdeal').value,
+    note: document.getElementById('kpi-note').value,
+  };
+  try {
+    await sbUpsert('bod_monthly_kpi', payload);
+    toast(`Đã lưu KPI ${MONTHS[mn-1]}/${yr} ✓`);
+  } catch(e) { toast('Lỗi: ' + e.message, 'err'); }
+}
+
+// ── PROJECTS ─────────────────────────────────────────────────
+let projRows = [];
+async function loadProjects() {
+  const yr = +document.getElementById('proj-year').value;
+  const mn = +document.getElementById('proj-month').value;
+  try {
+    projRows = await sbFetch('bod_project_revenue', `?year=eq.${yr}&month=eq.${mn}&order=segment.asc`);
+  } catch(e) { projRows = []; }
+  renderProjRows();
+}
+function renderProjRows() {
+  const wrap = document.getElementById('proj-rows');
+  wrap.innerHTML = '';
+  projRows.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'proj-row';
+    div.innerHTML = `
+      <input type="text" value="${r.project_name||''}" placeholder="Tên dự án" onchange="projRows[${i}].project_name=this.value">
+      <select onchange="projRows[${i}].segment=this.value">
+        ${SEGMENTS.map(s => `<option value="${s.key}" ${r.segment===s.key?'selected':''}>${s.label}</option>`).join('')}
+      </select>
+      <input type="number" value="${r.revenue||0}" step="0.01" style="text-align:right" onchange="projRows[${i}].revenue=+this.value">
+      <span></span>
+      <button class="del-btn" onclick="projRows.splice(${i},1);renderProjRows()">✕</button>
+    `;
+    wrap.appendChild(div);
+  });
+}
+function addProjRow() {
+  projRows.push({ project_name:'', segment:'primary', revenue:0 });
+  renderProjRows();
+}
+async function saveProjects() {
+  const yr = +document.getElementById('proj-year').value;
+  const mn = +document.getElementById('proj-month').value;
+  const rows = projRows.filter(r => r.project_name).map(r => ({ ...r, year: yr, month: mn }));
+  try {
+    await sbDel('bod_project_revenue', `?year=eq.${yr}&month=eq.${mn}`);
+    if (rows.length) await sbUpsert('bod_project_revenue', rows);
+    toast(`Đã lưu ${rows.length} dự án ✓`);
+  } catch(e) { toast('Lỗi: ' + e.message, 'err'); }
+}
+
+// ── PNL ─────────────────────────────────────────────────────
+let pnlData = [];
+async function loadPnl() {
+  const yr = +document.getElementById('pnl-year').value;
+  pnlData = await sbFetch('bod_pnl', `?year=eq.${yr}&order=row_order.asc`);
+  renderPnl();
+}
+function renderPnl() {
+  const tbody = document.getElementById('pnl-tbody');
+  tbody.innerHTML = '';
+  pnlData.forEach((r, i) => {
+    if (r.row_type === 'spacer') { tbody.innerHTML += '<tr><td colspan="4" style="height:8px"></td></tr>'; return; }
+    const pct = r.budget && r.value ? ((r.value - r.budget) / Math.abs(r.budget) * 100) : null;
+    const pctHtml = pct !== null ? `<span class="badge ${pct >= 0 ? 'b-ok' : 'b-err'}">${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%</span>` : '—';
+    const tr = document.createElement('tr');
+    tr.className = r.row_type === 'bold' ? 'bold' : r.row_type === 'total' ? 'total' : r.row_type === 'sub' ? 'sub' : '';
+    tr.innerHTML = `
+      <td>${r.label}</td>
+      <td><input type="number" value="${r.value ?? ''}" step="0.01" onchange="pnlData[${i}].value=+this.value;updatePnlPct(${i})"></td>
+      <td><input type="number" value="${r.budget ?? ''}" step="0.01" onchange="pnlData[${i}].budget=+this.value;updatePnlPct(${i})"></td>
+      <td id="pnl-pct-${i}">${pctHtml}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+function updatePnlPct(i) {
+  const r = pnlData[i];
+  const pct = r.budget && r.value ? ((r.value - r.budget) / Math.abs(r.budget) * 100) : null;
+  document.getElementById(`pnl-pct-${i}`).innerHTML = pct !== null ? `<span class="badge ${pct>=0?'b-ok':'b-err'}">${pct>=0?'+':''}${pct.toFixed(1)}%</span>` : '—';
+}
+async function savePnl() {
+  const yr = +document.getElementById('pnl-year').value;
+  const rows = pnlData.map(r => ({ ...r, year: yr }));
+  try {
+    await sbUpsert('bod_pnl', rows);
+    toast('Đã lưu P&L ✓');
+  } catch(e) { toast('Lỗi: ' + e.message, 'err'); }
+}
+
+// ── BALANCE SHEET ────────────────────────────────────────────
+let bsData = {};
+async function loadBS() {
+  const yr = +document.getElementById('bs-year').value;
+  const rows = await sbFetch('bod_balance_sheet', `?year=eq.${yr}&order=section.asc,row_order.asc`);
+  bsData = { assets: [], liabilities: [], equity: [] };
+  rows.forEach(r => { if (bsData[r.section]) bsData[r.section].push(r); });
+  renderBS();
+}
+function renderBS() {
+  const wrap = document.getElementById('bs-container');
+  const sections = [
+    { key:'assets', label:'TÀI SẢN' },
+    { key:'liabilities', label:'NỢ PHẢI TRẢ' },
+    { key:'equity', label:'VỐN CHỦ SỞ HỮU' },
+  ];
+  wrap.innerHTML = sections.map(s => `
+    <div>
+      <div style="font-size:11px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">${s.label}</div>
+      <table class="tbl">
+        <thead><tr><th style="text-align:left">Khoản mục</th><th>Giá trị</th></tr></thead>
+        <tbody>
+          ${(bsData[s.key]||[]).map((r,i) => `
+            <tr class="${r.row_type}">
+              <td>${r.label}</td>
+              <td><input type="number" value="${r.value??''}" step="0.01" data-sec="${s.key}" data-idx="${i}" onchange="bsData['${s.key}'][${i}].value=+this.value"></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `).join('');
+}
+async function saveBS() {
+  const yr = +document.getElementById('bs-year').value;
+  const allRows = [...bsData.assets, ...bsData.liabilities, ...bsData.equity].map(r => ({ ...r, year: yr }));
+  try {
+    await sbUpsert('bod_balance_sheet', allRows);
+    toast('Đã lưu Bảng CĐKT ✓');
+  } catch(e) { toast('Lỗi: ' + e.message, 'err'); }
+}
+
+// ── CASH FLOW ────────────────────────────────────────────────
+let cfData = {};
+async function loadCF() {
+  const yr = +document.getElementById('cf-year').value;
+  const rows = await sbFetch('bod_cashflow', `?year=eq.${yr}&order=section.asc,row_order.asc`);
+  cfData = { operating: [], investing: [], financing: [] };
+  rows.forEach(r => { if (cfData[r.section]) cfData[r.section].push(r); });
+  renderCF();
+}
+function renderCF() {
+  const wrap = document.getElementById('cf-container');
+  const sections = [
+    { key:'operating', label:'Hoạt động kinh doanh' },
+    { key:'investing', label:'Hoạt động đầu tư' },
+    { key:'financing', label:'Hoạt động tài chính' },
+  ];
+  wrap.innerHTML = sections.map(s => `
+    <div>
+      <div style="font-size:11px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">${s.label}</div>
+      <table class="tbl">
+        <thead><tr><th style="text-align:left">Khoản mục</th><th>Giá trị</th></tr></thead>
+        <tbody>
+          ${(cfData[s.key]||[]).map((r,i) => `
+            <tr class="${r.row_type}">
+              <td>${r.label}</td>
+              <td><input type="number" value="${r.value??''}" step="0.01" onchange="cfData['${s.key}'][${i}].value=+this.value"></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `).join('');
+}
+async function saveCF() {
+  const yr = +document.getElementById('cf-year').value;
+  const allRows = [...cfData.operating, ...cfData.investing, ...cfData.financing].map(r => ({ ...r, year: yr }));
+  try {
+    await sbUpsert('bod_cashflow', allRows);
+    toast('Đã lưu LCTT ✓');
+  } catch(e) { toast('Lỗi: ' + e.message, 'err'); }
+}
+
+// ── CONFIG ───────────────────────────────────────────────────
+async function loadConfig() {
+  try {
+    const rows = await sbFetch('bod_config', '?id=eq.main&limit=1');
+    if (rows.length) {
+      const c = rows[0];
+      document.getElementById('cfg-company').value = c.company || '';
+      document.getElementById('cfg-year').value = c.fiscal_year || 2025;
+      document.getElementById('cfg-currency').value = c.currency || 'tỷ đồng';
+      document.getElementById('company-name-top').textContent = c.company || 'Công ty chưa đặt tên';
+    }
+  } catch(e) {}
+}
+async function saveConfig() {
+  const payload = {
+    id: 'main',
+    company: document.getElementById('cfg-company').value,
+    fiscal_year: +document.getElementById('cfg-year').value,
+    currency: document.getElementById('cfg-currency').value,
+  };
+  try {
+    await sbUpsert('bod_config', payload);
+    document.getElementById('company-name-top').textContent = payload.company;
+    toast('Đã lưu cấu hình ✓');
+  } catch(e) { toast('Lỗi: ' + e.message, 'err'); }
+}
+function saveSupabaseCfg() {
+  SB_URL = document.getElementById('cfg-url').value.trim();
+  SB_KEY = document.getElementById('cfg-key').value.trim();
+  localStorage.setItem('bod_sb_url', SB_URL);
+  localStorage.setItem('bod_sb_key', SB_KEY);
+  toast('Đã lưu kết nối Supabase ✓');
+  testConn(false);
+}
+
+// ── NAV ──────────────────────────────────────────────────────
+function switchTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (id === 'pnl' && !pnlData.length) loadPnl();
+  if (id === 'balance') loadBS();
+  if (id === 'cashflow') loadCF();
+}
+</script>
+</body>
+</html>
